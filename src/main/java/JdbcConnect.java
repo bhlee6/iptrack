@@ -10,11 +10,11 @@ public class JdbcConnect {
     static String username;
     static String password;
     static AccessDatabase db;
-    static boolean userQuits = false;
+    static boolean userQuits = false; //Starts false, user is still using the application
     static String cmd;
 
     public static void main(String[] argv) throws IOException, ParseException, SQLException, GeoIp2Exception {
-        //READ + WRITE STUFF
+        //Read the given file, and write a new file containing the data as a csv
         Scanner s = new Scanner(System.in);
         System.out.println("Enter filename to parse: ");
         String userInput = s.nextLine();
@@ -26,6 +26,7 @@ public class JdbcConnect {
         System.out.println(fileName + " has been created.");
         System.out.println("Upload file into the database? Enter \"y\" to upload or any other key to cancel.");
         String parseInput = s.nextLine();
+        //User wants to upload the file into the active SQL server
         if (parseInput.equals("y")) {
 
             System.out.println("Enter MySQL username:");
@@ -43,11 +44,11 @@ public class JdbcConnect {
             db.getConnection(username, password); //Regrab connection to newly created DB
             db.createTable(); //Create the table
 
-            //
+            //Import the file to the database
             importToSQL(fileToUpload, db);
 
+            //Basic instructions for querying
             queryInstructions();
-
             do {
                 cmd = s.nextLine();
                 if ((cmd == "") | (cmd == null)) {
@@ -85,6 +86,7 @@ public class JdbcConnect {
     public static void runNextFunction(String[] command) throws SQLException, IOException, GeoIp2Exception {
         String first = command[0];
         if (command.length == 1) {
+            //User wants to exit the application
             if (first.toLowerCase().equals("exit")) {
                 userQuits = true;
             }
@@ -95,7 +97,7 @@ public class JdbcConnect {
                 db.numAttempts(Integer.parseInt(second));
             } else if (first.equals("2")) {
                 LocationOfIP loc = new LocationOfIP();
-                loc.findLocation(second);
+                System.out.println(loc.findLocation(second));
             } else System.out.println("Invalid command. Try with a valid command.");
         }
     }

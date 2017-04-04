@@ -1,8 +1,7 @@
-import com.mysql.jdbc.PreparedStatement;
-
 import java.sql.*;
 
 
+@SuppressWarnings("ALL")
 public class AccessDatabase {
 
     static String driver = "com.mysql.jdbc.Driver";
@@ -37,6 +36,11 @@ public class AccessDatabase {
     }
 
 
+    /**
+     * Creates a Database on the SQL server with the given name
+     * @param dbname Name of the database to be created
+     * @throws SQLException
+     */
     public static void createDB(String dbname) throws SQLException {
         dbName = dbname;
 
@@ -54,6 +58,15 @@ public class AccessDatabase {
     }
 
 
+    /**
+     * Creates a table named "attempt" in the SQL database.  The table contains the following:
+     * user: the username of the attempted logger
+     * protocol: protocol used
+     * ipaddress: the ip address used for the attempt
+     * date: date and time of the attempted login
+     * eventlength: length of the attempted login
+     * @throws SQLException
+     */
     public static void createTable() throws SQLException {
 
         String sqlCreate = "CREATE TABLE IF NOT EXISTS " + tableName
@@ -72,6 +85,12 @@ public class AccessDatabase {
     }
 
 
+    /**
+     * Given a CSV line, formats the line into a valid SQL insertion, and inserts the data into the SQL table
+     * @param line  String line containing the attempted login information
+     * @throws SQLException
+     */
+
     public static void insertLineIntoTable(String line) throws SQLException {
         String insertTableSQL = formatLineForSQL(line);
         try {
@@ -88,6 +107,11 @@ public class AccessDatabase {
     }
 
 
+    /**
+     * Parses the given line, and returns a String that is valid for an entry into the SQL table
+     * @param line String of the attempted login (csv)
+     * @return
+     */
     public static String formatLineForSQL(String line) {
         String[] tokens = line.split(",");
         StringBuilder sb = new StringBuilder();
@@ -107,6 +131,9 @@ public class AccessDatabase {
                 + "(" + sb + ")";
     }
 
+    /**
+     * Closes the statement, connection, and resultSet
+     */
     public void close() {
         try {
             if (resultSet != null) {
