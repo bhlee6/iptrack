@@ -48,7 +48,6 @@ public class DateTime {
         //Adds 00 for seconds value since the log does not include seconds, default set to 0
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:" + "00");
         return formatter.format(date);
-
     }
 
 }

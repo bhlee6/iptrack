@@ -1,72 +1,58 @@
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class JdbcConnect {
 
+    static AccessDatabase db;
+    static String cmd;
+    static String path;
+    static String dbName;
+    static File fileToUpload;
+
+    //MySQL Credentials
     static String username;
     static String password;
-    static AccessDatabase db;
+    static String host;
+    static String port;
+
+    static ArrayList<File> csvFiles = new ArrayList<>();
+
     static boolean userQuits = false; //Starts false, user is still using the application
-    static String cmd;
+
 
     public static void main(String[] argv) throws IOException, ParseException, SQLException, GeoIp2Exception {
         //Read the given file, and write a new file containing the data as a csv
         Scanner s = new Scanner(System.in);
-        System.out.println("Enter filename to parse: ");
-        String userInput = s.nextLine();
-        ReadWrite rw = new ReadWrite(userInput);
-        File fileToUpload = rw.logdata;
-        String fileName = fileToUpload.getName();
+        System.out.println("Ensure MySQL has an active connection.");
 
-        System.out.println("File successfully parsed.");
-        System.out.println(fileName + " has been created.");
-        System.out.println("Upload file into the database? Enter \"y\" to upload or any other key to cancel.");
-        String parseInput = s.nextLine();
-        //User wants to upload the file into the active SQL server
-        if (parseInput.equals("y")) {
+        enterFileOrPath(s);
 
-            System.out.println("Enter MySQL username:");
-            username = s.nextLine();
+        System.out.println("Enter path to file with db credentials:");
+        path = s.nextLine();
+        setMySQLCredentials(path); //Retrieve MySQL credentials from properties file
 
-            System.out.println("Enter password:");
-            password = s.nextLine();
+        db = new AccessDatabase();
+        createDBandTable(db);
 
-            System.out.println("Enter database name to upload to:");
-            String dbName = s.nextLine();
+        //Import the file to the database
+        importAllFilesToSQL(db);
 
-            db = new AccessDatabase();
-            db.getConnection(username, password); //Get DB Connection
-            db.createDB(dbName); //Create DB with the provided name
-            db.getConnection(username, password); //Regrab connection to newly created DB
-            db.createTable(); //Create the table
+        //Basic instructions for querying
+        queryInstructions();
+        userQuery(s);
 
-            //Import the file to the database
-            importToSQL(fileToUpload, db);
-
-            //Basic instructions for querying
-            queryInstructions();
-            do {
-                cmd = s.nextLine();
-                if ((cmd == "") | (cmd == null)) {
-                    System.out.println("Invalid command. Try with a valid command.");
-                }
-                else {
-                runNextFunction(argParser(cmd));
-                }
-            } while (!userQuits);
-            //Close statement and connections
-            db.close();
-        } else {
-            System.out.println("Nothing to upload");
-        }
+        //Close statement and connections
+        db.close();
         s.close();
     }
 
-    private static void importToSQL(File fileToUpload, AccessDatabase db) throws IOException {
+    public static void importSingleFileToSQL(File fileToUpload, AccessDatabase db) throws IOException {
         try {
             BufferedReader parsedText = new BufferedReader(new FileReader(fileToUpload));
             String line;
@@ -83,6 +69,13 @@ public class JdbcConnect {
         }
     }
 
+    //OVERLOADING importToSQL for Multiple files
+    public static void importAllFilesToSQL(AccessDatabase db) throws IOException {
+        for (File f: csvFiles) {
+            importSingleFileToSQL(f, db);
+        }
+    }
+
     public static void runNextFunction(String[] command) throws SQLException, IOException, GeoIp2Exception {
         String first = command[0];
         if (command.length == 1) {
@@ -95,9 +88,6 @@ public class JdbcConnect {
             String second = command[1];
             if (first.equals("1")) {
                 db.numAttempts(Integer.parseInt(second));
-            } else if (first.equals("2")) {
-                LocationOfIP loc = new LocationOfIP();
-                System.out.println(loc.findLocation(second));
             } else System.out.println("Invalid command. Try with a valid command.");
         }
     }
@@ -106,8 +96,19 @@ public class JdbcConnect {
         System.out.println("Enter a command to query the database:");
         System.out.println("Example: 1)10 will perform the first query with 10 as the argument");
         System.out.println("1. Find the number of failed login attempts for the first \"x\" number ip addresses.");
-        System.out.println("2. Find the location of an IP address. Example: 2)177.125.243.163");
         System.out.println("Exit: Exit the application");
+    }
+
+    public static void userQuery(Scanner s) throws GeoIp2Exception, SQLException, IOException {
+        do {
+            cmd = s.nextLine();
+            if ((cmd == "") | (cmd == null)) {
+                System.out.println("Invalid command. Try with a valid command.");
+            }
+            else {
+                runNextFunction(argParser(cmd));
+            }
+        } while (!userQuits);
     }
 
     public static String[] argParser(String s) {
@@ -115,4 +116,75 @@ public class JdbcConnect {
         return tokens;
     }
 
+    public static void setMySQLCredentials(String path) {
+        LoadDBProperties loadedProp = new LoadDBProperties();
+        loadedProp.loadFrom(path);
+        DBProperties DBProp = loadedProp.getCurrentProperties();
+
+        dbName = DBProp.getDatabase();
+        username = DBProp.getUser();
+        password = DBProp.getPassword();
+        host = DBProp.getHost();
+        port = DBProp.getPort();
+    }
+
+    public static String getURL(String host, String port) {
+        String url ="jdbc:mysql://"+host+":"+port+"/";
+        return url;
+    }
+
+    public static void createDBandTable(AccessDatabase db) throws SQLException {
+        db.url = getURL(host, port); //Set db url
+        db.getConnection(username, password); //Get DB Connection
+        db.createDB(dbName); //Create DB with the provided name
+        db.getConnection(username, password); //Regrab connection to newly created DB
+        db.createTable(); //Create the table
+    }
+
+    public static void createParsedFile(File file) throws IOException, ParseException {
+        ReadLogWriteCSV rw = new ReadLogWriteCSV(file);
+        fileToUpload = rw.logdata;
+        csvFiles.add(fileToUpload);
+        String fileName = fileToUpload.getName();
+        System.out.println("File successfully parsed.");
+        System.out.println(fileName + " has been created.");
+    }
+
+    //If File is selected, parse file, if a directory/folder is selected, parse all files in the given directory
+
+    public static void checkFileOrFolder(String path, Scanner s) throws IOException, ParseException {
+        try {
+            File file = new File(path);
+            boolean isFile = file.isFile(); // Check for regular file
+            boolean isDirectory = file.isDirectory(); //Check for directory
+
+            if (isFile) {
+                createParsedFile(file);
+            }
+            else if (isDirectory) {
+                File[] fileList = file.listFiles();
+                System.out.println("You have selected a directory. Creating CSV files for all files in" +
+                        "directory. Proceed? (y/n)");
+                String proceed = s.nextLine();
+                if (proceed.equals("y")) {
+                for (File f: fileList) {
+                    createParsedFile(f);
+                }
+                } else {
+                    enterFileOrPath(s);
+                }
+            }
+            else { System.out.println("File does not exist or invalid path.");
+            enterFileOrPath(s);
+            }
+        }catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void enterFileOrPath(Scanner s) throws IOException, ParseException {
+        System.out.println("Enter filename to parse: ");
+        String userInput = s.nextLine();
+        checkFileOrFolder(userInput, s);
+    }
 }
