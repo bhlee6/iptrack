@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/iptrack.iml" filepath="$PROJECT_DIR$/iptrack.iml" />
+      <module fileurl="file://$PROJECT_DIR$/trackip.iml" filepath="$PROJECT_DIR$/trackip.iml" />
     </modules>
   </component>
 </project>

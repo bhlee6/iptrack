@@ -6,17 +6,17 @@ import java.util.Date;
 /**
  * Class DateTime is used to create a DateTime object for the date and time of an attempted login.
  */
-public class DateTime {
+class DateTime {
 
     //Day of the Week (ie Mon, Tue, Wed...)
-    String dow;
+    private String dow;
     //Abbreviated Month (Jan, Feb, Mar...)
-    String month;
+    private String month;
     //Numerical date
-    String day;
-    String startTime;
-    String endTime;
-    int year;
+    private String day;
+    private String startTime;
+    private String endTime;
+    private int year;
 
     /**
      * @param dow Day of the Week (ie Mon, Tue, Wed...)
@@ -25,7 +25,7 @@ public class DateTime {
      * @param startTime start time of the login, hour:min
      * @param endTime end time of the login, hour:min
      */
-    public DateTime(String dow, String month, String day, String startTime, String endTime) {
+    DateTime(String dow, String month, String day, String startTime, String endTime) {
         this.dow = dow;
         this.month = month;
         this.day = day;
@@ -39,9 +39,8 @@ public class DateTime {
      * formatted for SQL DateTime insertions.  00 seconds added with the assumption that the startTime
      * does not include the seconds value.
      * @return String DateTime information formatted for SQL insertions
-     * @throws ParseException
      */
-    public String toStringForSql() throws ParseException {
+    String toStringForSql() throws ParseException {
         String given = this.dow+ " " + this.month+ " " + this.day + " " + this.startTime + " " + this.year;
         SimpleDateFormat parser = new SimpleDateFormat("EEE MMM d HH:mm yyyy");
         Date date = parser.parse(given);

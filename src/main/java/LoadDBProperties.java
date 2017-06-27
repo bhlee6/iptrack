@@ -1,23 +1,34 @@
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.Properties;
 
-public class LoadDBProperties {
+/**
+ * LoadDBProperties is mainly used to grab the database credentials used to login to a database
+ * from a Properties file that contains the following properties:
+ * "database"
+ * "user"
+ * "password"
+ * "host"
+ * "port"
+ */
+class LoadDBProperties {
 
-    DBProperties currentProperties;
+    private DBProperties currentProperties;
 
-    public void loadFrom(String path){
+    /**
+     * Set the class' DBProperties currentProperties to the information contained
+     * in the properties file from the given path
+     * @param path path leading to the properties file that contains the database credentials
+     */
+    void loadFrom(Path path){
 
         Properties property = new Properties();
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream(path);
-            if(inputStream==null){
-                System.out.println("Unable to find file.");
-                return;
-            }
-
+            //CLI parameter guarantees path to the property is given
+            inputStream = new FileInputStream(path.toString());
             property.load(inputStream);
             currentProperties =
                     new DBProperties(property.getProperty("database"),
@@ -39,7 +50,10 @@ public class LoadDBProperties {
         }
     }
 
-    public DBProperties getCurrentProperties() {
+    /**
+     * @return the DBProperties object containing the information for the db
+     */
+    DBProperties getCurrentProperties() {
         return currentProperties;
     }
 }

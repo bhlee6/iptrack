@@ -1,11 +1,22 @@
+/**
+ * DBProperties is a class to hold the information regarding the database credentials to ensure proper
+ * connection to the database
+ */
 public class DBProperties {
-    String database;
-    String user;
-    String password;
-    String host;
-    String port;
+    private String database;
+    private String user;
+    private String password;
+    private String host;
+    private String port;
 
-    public DBProperties(String database, String user, String password, String host, String port) {
+    /**
+     * @param database The database name
+     * @param user username for the database
+     * @param password password for the database
+     * @param host the host
+     * @param port the port number
+     */
+    DBProperties(String database, String user, String password, String host, String port) {
         this.database = database;
         this.user = user;
         this.password = password;
@@ -13,7 +24,7 @@ public class DBProperties {
         this.port = port;
     }
 
-    public String getDatabase() {
+    String getDatabase() {
         return database;
     }
 
@@ -29,7 +40,7 @@ public class DBProperties {
         this.user = user;
     }
 
-    public String getPassword() {
+    String getPassword() {
         return password;
     }
 
@@ -37,7 +48,7 @@ public class DBProperties {
         this.password = pw;
     }
 
-    public String getHost() {
+    String getHost() {
         return host;
     }
 
@@ -45,10 +56,10 @@ public class DBProperties {
         this.host = host;
     }
 
-
-    public String getPort() {
+    String getPort() {
         return port;
     }
+
     public void setPort(String port) {
         this.port = port;
     }

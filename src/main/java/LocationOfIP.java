@@ -13,19 +13,17 @@ import com.maxmind.geoip2.model.CityResponse;
  */
 public class LocationOfIP {
 
-     String dbName = "GeoLite2-City.mmdb";
-     ClassLoader classLoader = LocationOfIP.class.getClassLoader();
-     File db = new File(classLoader.getResource(dbName).getFile());
+     private String dbName = "GeoLite2-City.mmdb";
+     private ClassLoader classLoader = LocationOfIP.class.getClassLoader();
+     private File db = new File(classLoader.getResource(dbName).getFile());
 
     /**
      * Given a string Ip address, returns an array of the location of the IP address in the format City, State, Country
      * If the value is null, the value is changed to "Unknown".
      * @param ip IP address as a String
      * @return String[] of the ip address location [0] = City, [1] = State, [2] = Country
-     * @throws IOException
-     * @throws GeoIp2Exception
      */
-    public String[] findFullLocation(String ip) throws IOException, GeoIp2Exception {
+    String[] findFullLocation(String ip) throws IOException, GeoIp2Exception {
         //Location of the geoIP2 city database
         DatabaseReader dbReader = new DatabaseReader.Builder(db).build();
 
