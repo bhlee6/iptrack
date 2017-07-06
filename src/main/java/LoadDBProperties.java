@@ -38,13 +38,13 @@ class LoadDBProperties {
                             property.getProperty("port"));
 
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         } finally{
             if(inputStream!=null){
                 try {
                     inputStream.close();
                 } catch (IOException e) {
-                    System.out.println(e.getMessage());
+                    e.printStackTrace();
                 }
             }
         }

@@ -4,6 +4,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * CLIParameters is a class that contains the different parameters that the program can run with.
+ */
 public class CLIParameters {
     @Parameter(names = {"-h", "--help"},
             help = true,

@@ -1,6 +1,4 @@
 
-import java.text.ParseException;
-
 /**
  * ReadLineGrabRelevant Class has various methods to collect the relevant
  * information needed from a String line of a lastb output
@@ -13,23 +11,23 @@ class ReadLineGrabRelevant {
      * @return String[] containing all the relevant Strings for SQL insertion
      *
      */
-    String[] collectRelevant(String line) throws ParseException {
+    String[] collectRelevant(String line) {
+        String[] toKeep = new String[5];
         String delims = "[ ]+";
         //Replace all "-" characters with an empty String, and tokenize the String
-        String[] tokens = line.replaceAll("[-]","").split(delims);
-        String[] toKeep = new String[5];
-
-        //Date converter
-        String date = convertDate(tokens[3],tokens[4],tokens[5], tokens[6],tokens[7]);
-
-        toKeep[0] = tokens[0];
-        toKeep[1] = tokens[1];
-        toKeep[2] = tokens[2];
-        toKeep[3] = date;
-        toKeep[4] = removeParenthesis(tokens[8]);
+        String[] tokens = line.replaceAll("[-]", "").split(delims);
+        //Ensure the tokens length matches the number of tokens needed to populate the toKeep[]
+        if (tokens.length == 9) {
+            //Date converter
+            String date = convertDate(tokens[3], tokens[4], tokens[5], tokens[6], tokens[7]);
+            toKeep[0] = tokens[0];
+            toKeep[1] = tokens[1];
+            toKeep[2] = tokens[2];
+            toKeep[3] = date;
+            toKeep[4] = removeParenthesis(tokens[8]);
+        }
         return toKeep;
     }
-
     /**
      * Given the string date values from lastb logs, convertDate creates a DateTime object with the values, and
      * returns a String of the DateTime object that matches the SQL DateTime format, valid for SQL insertions.
@@ -40,10 +38,16 @@ class ReadLineGrabRelevant {
      * @param end End time
      * @return String of the date, valid for SQL database insertions
      */
-    private String convertDate(String dow, String month, String day, String start, String end)
-            throws ParseException {
+    private String convertDate(String dow, String month, String day, String start, String end) {
+        String sqlDate = "";
         DateTime date = new DateTime(dow, month, day, start, end);
-        return date.toStringForSql();
+        try {
+            sqlDate = date.toStringForSql();
+        }
+        catch(Exception e) {
+            e.printStackTrace();
+        }
+        return sqlDate;
     }
 
     /**
@@ -54,5 +58,4 @@ class ReadLineGrabRelevant {
     private String removeParenthesis(String s) {
         return s.replaceAll("[()]", "");
     }
-
 }

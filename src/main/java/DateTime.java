@@ -48,7 +48,6 @@ class DateTime {
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:" + "00");
         return formatter.format(date);
     }
-
 }
 
 

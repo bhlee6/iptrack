@@ -1,7 +1,6 @@
-import com.maxmind.geoip2.exception.GeoIp2Exception;
-import java.io.IOException;
+
 import java.sql.*;
-import java.text.ParseException;
+import java.util.ArrayList;
 
 
 /**
@@ -13,6 +12,7 @@ public class AccessDatabase {
     String driver = "com.mysql.jdbc.Driver";
     Connection conn = null;
     Statement stmt = null;
+    PreparedStatement pstmt = null;
     ResultSet resultSet = null;
     public  String dbName = "";
     public  String url = "";
@@ -24,13 +24,12 @@ public class AccessDatabase {
      * Get connection to the database using the username and password provided
      * @param username given db username
      * @param password given db password
-     * @throws SQLException
      */
-    public void getConnection(String username, String password) throws SQLException {
+    public void getConnection(String username, String password) {
         try {
             Class.forName(driver);
         } catch (ClassNotFoundException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
 
         try {
@@ -40,7 +39,7 @@ public class AccessDatabase {
                 conn = DriverManager.getConnection(url, username, password);
 
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -49,22 +48,26 @@ public class AccessDatabase {
      * Creates a Database on the SQL server with the given name
      *
      * @param dbname Name of the database to be created
-     * @throws SQLException
      */
-    public void createDB(String dbname) throws SQLException {
-        dbName = dbname;
-
-        String dbCreate = "CREATE DATABASE IF NOT EXISTS " + dbname;
+    public void createDB(String dbname) {
         try {
-            stmt = conn.createStatement();
-            stmt.execute(dbCreate);
-            System.out.println("DB " + dbname + " is created!");
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            dbName = dbname;
+
+            String dbCreate = "CREATE DATABASE IF NOT EXISTS " + dbname;
+            try {
+                stmt = conn.createStatement();
+                stmt.execute(dbCreate);
+                System.out.println("DB " + dbname + " is created!");
+            } catch (SQLException e) {
+                System.out.println(e.getMessage());
+            }
+            //DB is now created, set dbIsCreated to true, and add db to the URL
+            dbIsCreated = true;
+            url = url + dbname;
         }
-        //DB is now created, set dbIsCreated to true, and add db to the URL
-        dbIsCreated = true;
-        url = url + dbname;
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -81,9 +84,8 @@ public class AccessDatabase {
      * the city is provided)
      * country: country location of the ip
      *
-     * @throws SQLException
      */
-    public void createTable() throws SQLException {
+    public void createTable() {
 
         String sqlCreate = "CREATE TABLE IF NOT EXISTS " + tableName
                 + " (user VARCHAR(80),"
@@ -99,7 +101,7 @@ public class AccessDatabase {
             stmt.execute(sqlCreate);
             System.out.println("Table attempt is created!");
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -108,84 +110,74 @@ public class AccessDatabase {
      * Given a log line, formats the line into a valid SQL insertion, and inserts the data into the SQL table
      *
      * @param line String line containing the attempted login information
-     * @throws SQLException
      */
 
     //POSSIBLE UPDATES/TODO BATCH, batch nonfunctionality atm
 
-    public void insertLineIntoTable(String line)
-            throws SQLException, IOException, GeoIp2Exception, ParseException {
-        ReadLineGrabRelevant rl = new ReadLineGrabRelevant();
-        String[] relevantTokens = rl.collectRelevant(line);
-        String insertTableSQL = formatLineForSQL(relevantTokens);
+    public void insertLineIntoTable(String line) {
         try {
-            System.out.println(insertTableSQL);
-            stmt = conn.createStatement();
-            // execute insert SQL stetement
-            stmt.executeUpdate(insertTableSQL);
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            ReadLineGrabRelevant rl = new ReadLineGrabRelevant();
+            String[] relevantTokens = rl.collectRelevant(line);
 
-        }
-    }
-
-
-    /**
-     * Adds single quotes around each of the tokens to be added to the sql statements,
-     * and returns a String that is valid for an entry into the SQL table
-     *
-     * @param line String of the attempted login
-     * @return String SQL insertion statement of the log in attempt
-     */
-    public String formatLineForSQL(String[] tokens) throws IOException, GeoIp2Exception {
-        String[] loc = getLocationForSQL(tokens[2]);
-
-        //Add single quotes around each of the tokens to be added to the SQL insertion statement
-        String[] logTokens = addSingleQuotes(tokens);
-        String[] locTokens = addSingleQuotes(loc);
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < logTokens.length; i++) {
-            sb.append(logTokens[i]);
-            sb.append(",");
-        }
-
-        if (locTokens.length >= 1) {
-            for (int i = 0; i < locTokens.length - 1; i++) {
-                sb.append(locTokens[i]);
-                sb.append(",");
+            if (relevantTokens[0] == null){
+                System.out.println("Line cannot be imported:" + line);
             }
-            sb.append(locTokens[locTokens.length - 1]);
+
+            else {
+                ArrayList<String> allTokens = listRelevantTokens(relevantTokens);
+                pstmt.setString(1, allTokens.get(0));
+                pstmt.setString(2, allTokens.get(1));
+                pstmt.setString(3, allTokens.get(2));
+                pstmt.setString(4, allTokens.get(3));
+                pstmt.setString(5, allTokens.get(4));
+                pstmt.setString(6, allTokens.get(5));
+                pstmt.setString(7, allTokens.get(6));
+                pstmt.setString(8, allTokens.get(7));
+                // execute insert SQL stetement
+                pstmt.executeUpdate();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        String s = sb.toString();
-        return createInsertStatement(s);
     }
 
     /**
-     * Given a String array, returns a String[] of each of the values surrounded
-     * by single quotes
-     *
-     * @param sarray Given String array
-     * @return String[] containing each value from the array with single quotes surrounding the value
+     * Returns a list of the relevant token information, including the location data of an ip address
+     * @param tokens String[] containing the relevant tokens
+     * @return Array List of the relevant tokens including the proper location data if an ip address is present
      */
-    public String[] addSingleQuotes(String[] sarray) {
-        for (int i = 0; i < sarray.length; i++) {
-            sarray[i] = "'" + sarray[i] + "'";
+    public ArrayList<String> listRelevantTokens(String[] tokens) {
+        ArrayList<String> allTokens = new ArrayList();
+
+        if (tokens[2] == null) {
+            System.out.println("No ipaddress found");
         }
-        return sarray;
+        else {
+            String[] loc = getLocationForSQL(tokens[2]);
+            for (String s: tokens) {
+                allTokens.add(s);
+            }
+            for (String sloc: loc) {
+                allTokens.add(sloc);
+            }
+            for (String s: allTokens) {
+                doubleUpQuote(s);
+            }
+        }
+        return allTokens;
     }
 
+
     /**
-     * Returns a String statement of an Insert into SQL table
+     * Returns a String statement of an Insert into SQL table (Following standards for prepared statement)
      *
-     * @param s String of the values to be added to the SQL Table
      * @return Insert into table SQL statement
      */
-    public String createInsertStatement(String s) {
+    public String createInsertStatement() {
         return "INSERT INTO " + tableName
                 + "(user, protocol, ipaddress, date, eventlength, city, state, country) "
                 + "VALUES"
-                + "(" + s + ")";
+                + "(?,?,?,?,?,?,?,?)";
     }
 
 
@@ -216,15 +208,10 @@ public class AccessDatabase {
      * Gets the location of an ip address
      * @param ipAddress provided as a string
      * @return String[] containing the location of the ip address
-     * @throws IOException
-     * @throws GeoIp2Exception
      */
-    public String[] getLocationForSQL(String ipAddress) throws IOException, GeoIp2Exception {
+    public String[] getLocationForSQL(String ipAddress) {
         LocationOfIP loc = new LocationOfIP();
         String[] locToModify = loc.findFullLocation(ipAddress);
-        for (int i = 0; i < locToModify.length; i++) {
-            locToModify[i] = doubleUpQuote(locToModify[i]);
-        }
         return locToModify;
     }
 
@@ -240,90 +227,35 @@ public class AccessDatabase {
         curr = s.replaceAll("'", "''");
         return curr;
     }
+}
 
 
-    //////////////////////////////////////////////////////QUERIES//////////////////////
-
-
-    /**
-     * Number of failed login attempts from a specific ip address, starting from the highest count
-     * @param num the max number of items to return
-     * @throws Exception
-     */
-    public void numAttempts(int num) throws SQLException, IOException, GeoIp2Exception {
-        try {
-            stmt = conn.createStatement();
-            resultSet = stmt.executeQuery("select ipaddress, count(*) as cnt from " + dbName + ".attempt " +
-                    "group by ipaddress order by cnt desc limit " + num);
-            System.out.println("IP addresses with the most number of attempted logins");
-            while (resultSet.next()) {
-                String ipaddress = resultSet.getString("ipaddress");
-                int count = resultSet.getInt("cnt");
-
-                System.out.println(String.format(
-                        "ipaddress: %5s  count: %5d", ipaddress, count));
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    /**
-     * Number of different usernames an ipAddress has used, starting from the highest count
-     * @param num the max number of items to return
-     * @throws SQLException
-     */
-    public void numOfUsernames(int num) throws SQLException {
-        try {
-            stmt = conn.createStatement();
-            resultSet = stmt.executeQuery("select ipaddress, COUNT(distinct user) as cnt from " + dbName + ".attempt " +
-                    "group by ipaddress order by cnt desc limit " + num);
-            System.out.println("The number of different usernames for each ipaddress");
-            while (resultSet.next()) {
-                String ipaddress = resultSet.getString("ipaddress");
-                int count = resultSet.getInt("cnt");
-
-                System.out.println(String.format(
-                        "ipaddress: %5s  Username count: %5d", ipaddress, count));
-            }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
-        }
-    }
-
-    /* QUERIES TO BE IMPLEMENTED ONCE DESIGN FURTHER ESTABLISHED
-    /////
-# of failed login attempts from an ip address
-
-select ipaddress, count(*) as occurrences from db.attempt
-group by ipaddress
-order by occurrences desc
-limit 10
-
-
-/////
-The total number of attempts each hour
-
-SELECT HOUR(date), COUNT(*) FROM db.attempt
-GROUP BY HOUR(date)
-
-
+/* QUERIES TO BE IMPLEMENTED ONCE DESIGN FURTHER ESTABLISHED
 //////
-count the number of times an ipaddress tries to login during each hour
+count the number of times all ipaddress tries to login during each hour
 
 SELECT ipaddress, HOUR(date), COUNT(*) FROM db.attempt
 GROUP BY ipaddress, HOUR(date)
 order by ipaddress
 
+///SINGULAR 1 IP ADRESS
+SELECT HOUR(date), COUNT(*) FROM attempt
+where ipaddress = '103.207.39.140'
+GROUP BY HOUR(date)
+order by HOUR(date)
 
 /////
 count the number of times an ipaddress tries to login during each hour each day
-
 
 SELECT ipaddress, DAY(date), HOUR(date), COUNT(*) FROM db.attempt
 GROUP BY ipaddress, DAY(date), HOUR(date)
 order by ipaddress
 
+///SINGULAR
+SELECT HOUR(date), COUNT(*) FROM attempt
+where ipaddress = '103.207.39.140'
+GROUP BY HOUR(date)
+order by HOUR(date)
 ///
 count where its greater than 2
 
@@ -333,54 +265,59 @@ having cnt > 2
 order by ipaddress
 
 
-/////
 
-number of times a username was used with a different ipaddress
+///////////UPDATED PHP QUERIES///////////
+$mostFrequentIp = $db -> select(
+	"select ipaddress, country, count(*) as occurrences
+	 from attempt group by ipaddress order by occurrences desc limit " . $cnt,
+	"Most attempts from IP Address:");
 
-select user, COUNT(distinct ipaddress) as cnt
-from db.attempt
-group by user
-order by cnt desc
+	$mostFrequentCountry = $db -> select(
+	"select country, count(*) as occurrences from attempt group by country order by occurrences desc limit " . $cnt,
+	"Attempted Logins from each Country");
+
+	$mostIpPerCountry = $db -> select(
+	"select country, count(distinct ipaddress) as cnt from attempt group by country order by cnt desc limit " . $cnt,
+	"Countries with the most number of Unique IPs");
+
+	$mostIpPerCity = $db -> select(
+	"select city, country, count(*) as occurrences from attempt group by city order by occurrences desc limit " . $cnt,
+	"Cities with the most number of IPs");
+
+	$ipWithMostUsernames = $db -> select(
+	"select ipaddress, country, COUNT(distinct user) as count from attempt group by ipaddress order by count desc limit ".$cnt,
+	"IPs with the most number of Usernames");
+
+	$attemptsEachHour =  $db -> select(
+	"SELECT HOUR(date), COUNT(*) FROM attempt GROUP BY HOUR(date)",
+	"Total attempts per hour");
+
+	$uniqueUsernames = $db -> select(
+	"select user, COUNT(distinct ipaddress) as cnt from attempt group by user order by cnt desc limit ".$cnt,
+	"Number of times a username was used with a unique ipaddress"
+	);
+
+	$totalAttemptPerHour = $db -> select (
+	"SELECT ipaddress, country, HOUR(date), COUNT(*) FROM attempt GROUP BY ipaddress, HOUR(date) order by ipaddress limit ".$cnt,
+	"Total attempts per hour for each IP");
+
+	$numberOfUniqueUsernames = $db -> select(
+	"select ipaddress, country, COUNT(distinct user) as cnt from attempt group by ipaddress order by cnt desc limit ".$cnt,
+	"Number of Unique Usernames for each IP");
+
+	$numberOfAttemptsSameUsername = $db -> select(
+	"select user, ipaddress, country, count(*) as cnt from attempt group by user, ipaddress order by cnt desc limit ".$cnt,
+	"Number of Attempts an IP Address used the Same Username");
+
+	//User provided IP Address
 
 
-/////
-number of different usernames an ipaddress used
+	$totalAttemptsPerHour = $db -> select(
+	"SELECT HOUR(date), COUNT(*) FROM attempt where ipaddress = '".$userGivenIp."' GROUP BY HOUR(date) order by HOUR(date)",
+	"Total Attempts for a Given IP per Hour");
 
-select ipaddress, COUNT(distinct user) as cnt
-from db.attempt
-group by ipaddress
-order by cnt desc
+	$attemptsPerHourPerDay = $db -> select(
+	"SELECT HOUR(date), COUNT(*) FROM attempt where ipaddress = '".$userGivenIp."' GROUP BY HOUR(date) order by HOUR(date)",
+	"Attempts for a Given IP at each hour each day");
 
-
-///
-Count the number of times an ip address uses the same username to login
-
-select user, ipaddress, count(*) as cnt
-from db.attempt
-group by user, ipaddress
-order by cnt desc
-
-
-//Find the number of attempts from each country
-select country, count(*) as occurrences
-from db.attempt
-group by country
-order by occurrences desc
-
-
-//Find the number of attempts from each city
-select city, country, count(*) as occurrences from attempt group by city order by occurrences desc limit 10
-
-
-//Find out which ip address was attempted the most frequently and the country of the ip
-select ipaddress, country, count(*) as occurrences from db.attempt
-group by ipaddress, country
-order by occurrences desc
-
-//Find which countries had the most number of distinct ipaddresses
-select country, count(distinct ipaddress) as cnt from db.attempt
-group by country
-order by cnt desc
-
-     */
-}
+*/

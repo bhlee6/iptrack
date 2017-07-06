@@ -22,41 +22,35 @@ public class JdbcConnect {
     //Files to be added to the database
     ArrayList<File> csvFiles = new ArrayList<>();
 
-    //Starts false, user is still using the application
-    //Used for currrent iteration of querying (TO BE REPLACED)
-    private boolean userQuits = false;
-
     //Interface Used to help pass which method for generating input into database
     interface I {
-        void myMethod() throws IOException, ParseException, GeoIp2Exception;
+        void myMethod() throws GeoIp2Exception, ParseException, IOException;
     }
 
     /**
      * Primary run function that handles database setup and importing the log information to the database
-     * @param methodInterface method to use determined on whether the input is stdin or file
      *
+     * @param methodInterface method to use determined on whether the input is stdin or file
      */
-    void run(I methodInterface) throws IOException, ParseException, SQLException, GeoIp2Exception {
-        Scanner s = new Scanner(System.in);
-        System.out.println("Ensure MySQL has an active connection.");
-        setMySQLCredentials(); //Retrieve MySQL credentials from properties file
+    void run(I methodInterface) {
+        try {
+            Scanner s = new Scanner(System.in);
+            System.out.println("Ensure MySQL has an active connection.");
+            setMySQLCredentials(); //Retrieve MySQL credentials from properties file
 
-        db = new AccessDatabase();
+            db = new AccessDatabase();
 
-        //Create the database name and table with the provided SQL credentials
-        createDBandTable(db);
+            //Create the database name and table with the provided SQL credentials
+            createDBandTable(db);
 
-        //Import the given input to the database
-        methodInterface.myMethod();
-
-        //Basic instructions for querying. WILL BE REPLACED.
-        //Current iteration only for testing.
-        queryInstructions();
-        userQuery(s);
-
-        //Close statement and connections
-        db.close();
-        s.close();
+            //Import the given input to the database
+            methodInterface.myMethod();
+            //Close statement and connections
+            db.close();
+            s.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -67,15 +61,16 @@ public class JdbcConnect {
         importFromReader(br);
     }
 
-    public void importFromReader(BufferedReader br) throws IOException, GeoIp2Exception, ParseException {
-        String line;
-        br.readLine();
+    public void importFromReader(BufferedReader br) {
         try {
+            String line;
+            br.readLine();
             while ((line = br.readLine()) != null && line.length() != 0) {
-                db.insertLineIntoTable(line);
+                if (line.trim().length() > 0)
+                    db.insertLineIntoTable(line);
             }
-        } catch (SQLException e) {
-            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -85,76 +80,34 @@ public class JdbcConnect {
      * @param fileToUpload given log file
      * @param db           the given AccessDatabase
      */
-    public void importSingleFileToSQL(File fileToUpload, AccessDatabase db) throws IOException {
+    public void importSingleFileToSQL(File fileToUpload, AccessDatabase db) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(fileToUpload));
             String line;
-            try {
-                while ((line = br.readLine()) != null) {
-                    //Insert each line into the database
+            //db.conn.setAutoCommit(false);
+            String insertStmt = db.createInsertStatement();
+            db.pstmt = db.conn.prepareStatement(insertStmt);
+            System.out.println("Inserting each log in attempt into the database...");
+            while ((line = br.readLine()) != null) {
+                //Insert each line into the database
+                if (line.trim().length() > 0) {
                     db.insertLineIntoTable(line);
                 }
-            } catch (SQLException e) {
-                System.out.println(e.getMessage());
             }
+            //  db.conn.commit();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            e.printStackTrace();
         }
     }
 
     /**
      * Imports all the information in all log files in csvFiles to the database
-     *
      */
-    public void importAllFilesToSQL() throws IOException {
+    public void importAllFilesToSQL() {
         for (File f : csvFiles) {
             importSingleFileToSQL(f, db);
         }
     }
-
-
-    //////////////////////////////////////////////////////
-    //USER COMMANDS BASIC
-    //////////////////////////////////////////////////////
-
-
-    public void runNextFunction(String[] command) throws SQLException, IOException, GeoIp2Exception {
-        String first = command[0];
-        if (command.length == 1) {
-            //User wants to exit the application
-            if (first.toLowerCase().equals("exit")) {
-                userQuits = true;
-            } else System.out.println("Invalid command. Try with a valid command.");
-        } else if (command.length > 1) {
-            String second = command[1];
-            if (first.equals("1")) {
-                db.numAttempts(Integer.parseInt(second));
-            } else System.out.println("Invalid command. Try with a valid command.");
-        }
-    }
-
-    public void queryInstructions() {
-        System.out.println("Enter a command to query the database:");
-        System.out.println("Example: 1)10 will perform the first query with 10 as the argument");
-        System.out.println("1. Find the number of failed login attempts for the first \"x\" number ip addresses.");
-        System.out.println("Exit: Exit the application");
-    }
-
-    public void userQuery(Scanner s) throws GeoIp2Exception, SQLException, IOException {
-        do {
-            String cmd = s.nextLine();
-            if (cmd.equals("")) {
-                System.out.println("Invalid command. Try with a valid command.");
-            } else {
-                runNextFunction(argParser(cmd));
-            }
-        } while (!userQuits);
-    }
-
-    public String[] argParser(String s) {
-        return s.split("\\)");
-    }
-
 
     //////////////////////////////////////////////////////
     //SQL CREDENTIALS
@@ -191,7 +144,7 @@ public class JdbcConnect {
      *
      * @param db the given AccessDatabase object
      */
-    public void createDBandTable(AccessDatabase db) throws SQLException {
+    public void createDBandTable(AccessDatabase db) {
         db.url = getURL(host, port); //Set db url
         db.getConnection(username, password); //Get DB Connection
         db.createDB(dbName); //Create DB with the provided name

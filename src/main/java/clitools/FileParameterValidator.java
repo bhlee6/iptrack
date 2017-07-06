@@ -10,6 +10,12 @@ import java.nio.file.Paths;
 
 public class FileParameterValidator implements IParameterValidator {
 
+    /**
+     * Checks to make sure the given path exists and is a regular file
+     * @param name
+     * @param value
+     * @throws ParameterException
+     */
     @Override
     public void validate(String name, String value) throws ParameterException {
         Path path = Paths.get(value);
@@ -23,6 +29,11 @@ public class FileParameterValidator implements IParameterValidator {
         }
     }
 
+    /**
+     * Checks to make sure the supplied path exists
+     * @param path User given path
+     * @return True if the path leads to an existing file, false otherwise
+     */
     private boolean exists(Path path) {
         return (Files.exists(path, LinkOption.NOFOLLOW_LINKS));
     }

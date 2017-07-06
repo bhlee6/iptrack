@@ -23,50 +23,53 @@ public class LocationOfIP {
      * @param ip IP address as a String
      * @return String[] of the ip address location [0] = City, [1] = State, [2] = Country
      */
-    String[] findFullLocation(String ip) throws IOException, GeoIp2Exception {
-        //Location of the geoIP2 city database
-        DatabaseReader dbReader = new DatabaseReader.Builder(db).build();
-
-        InetAddress ipAddress = InetAddress.getByName(ip);
-        CityResponse response = dbReader.city(ipAddress);
-
-        //Retrieve the country, city and state names from the db
-        String city = response.getCity().getName();
-        String state = response.getLeastSpecificSubdivision().getName();
-        String country = response.getCountry().getName();
-
-        //Contain location info into an array
+    String[] findFullLocation(String ip) {
         String[] locArray = new String[3];
-        locArray[0] = city;
-        locArray[1] = state;
-        locArray[2] = country;
+        try {
+            //Location of the geoIP2 city database
+            DatabaseReader dbReader = new DatabaseReader.Builder(db).build();
 
-        //Change any null values to String "Unknown"
-        for (int i = 0; i < locArray.length; i++) {
-            if (locArray[i]==null) {
-                locArray[i] = "Unknown";
+            InetAddress ipAddress = InetAddress.getByName(ip);
+            CityResponse response = dbReader.city(ipAddress);
+
+            //Retrieve the country, city and state names from the db
+            String city = response.getCity().getName();
+            String state = response.getLeastSpecificSubdivision().getName();
+            String country = response.getCountry().getName();
+
+            //Contain location info into an array
+
+            locArray[0] = city;
+            locArray[1] = state;
+            locArray[2] = country;
+
+            //Change any null values to String "Unknown"
+            for (int i = 0; i < locArray.length; i++) {
+                if (locArray[i] == null) {
+                    locArray[i] = "Unknown";
+                }
             }
+            dbReader.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        dbReader.close();
         return locArray;
     }
 
     //Extraneous methods if needed straight from an IP Address
 
-    public String findCity(String ip) throws IOException, GeoIp2Exception {
+    public String findCity(String ip) {
         String[] locArray = findFullLocation(ip);
         return locArray[0];
     }
 
-    public String findState(String ip) throws IOException, GeoIp2Exception {
+    public String findState(String ip) {
         String[] locArray = findFullLocation(ip);
         return locArray[1];
     }
 
-    public String findCountry(String ip) throws IOException, GeoIp2Exception {
+    public String findCountry(String ip) {
         String[] locArray = findFullLocation(ip);
         return locArray[2];
     }
-
-
 }

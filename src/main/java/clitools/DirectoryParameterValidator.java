@@ -10,6 +10,12 @@ import java.nio.file.Paths;
 
 public class DirectoryParameterValidator implements IParameterValidator {
 
+    /**
+     * Checks to make sure the given path exists, and has read and write permissions.
+     * @param name
+     * @param value
+     * @throws ParameterException
+     */
     @Override
     public void validate(String name, String value) throws ParameterException {
         Path path = Paths.get(value);
@@ -28,10 +34,20 @@ public class DirectoryParameterValidator implements IParameterValidator {
 
     }
 
+    /**
+     * Checks to make sure the supplied path has read and write permissions
+     * @param path User given path
+     * @return True if both read/write permissions, false otherwise
+     */
     private boolean checkPermissions(Path path) {
         return (Files.isReadable(path) && Files.isWritable(path));
     }
 
+    /**
+     * Checks to make sure the supplied path exists
+     * @param path User given path
+     * @return True if the path leads to an existing file, false otherwise
+     */
     private boolean exists(Path path) {
         return (Files.exists(path, LinkOption.NOFOLLOW_LINKS));
     }
