@@ -7,8 +7,8 @@ import java.nio.file.Paths;
 public class PathConverter implements IStringConverter<Path> {
     /**
      * Convert the given string value to a path
-     * @param value
-     * @return
+     * @param value given value
+     * @return Path of the given value
      */
     @Override
     public Path convert(String value) {

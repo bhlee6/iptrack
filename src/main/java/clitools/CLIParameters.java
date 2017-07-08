@@ -1,5 +1,7 @@
 package clitools;
 import com.beust.jcommander.Parameter;
+import com.maxmind.geoip2.record.City;
+
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,12 +37,25 @@ public class CLIParameters {
             description = "Data to be uploaded to the database is from stdin.")
     public boolean stdin = false;
 
+    @Parameter(names = {"-stdincmd", "--stdincmd"},
+            validateWith = CommandValidator.class,
+            description = "Data to be uploaded to the database is from stdin using specified command.")
+    public String stdincmd;
+
     @Parameter(names = {"-p", "--properties"},
             required = true,
             validateWith = FileParameterValidator.class,
             converter = PathConverter.class,
             description = "Absolute path to the *.properties file that contains the database credential.")
     public Path propertiesPath;
+
+
+    @Parameter(names = {"-db", "--db"},
+            required = true,
+            validateWith = FileParameterValidator.class,
+            converter = PathConverter.class,
+            description = "Absolute path to the 'GeoLite2-City.mmdb' file.")
+    public Path ipDb;
 
     public boolean isHelp() {
         return help;
@@ -53,6 +68,7 @@ public class CLIParameters {
                 "\nfiles=" + files +
                 "\ndirectory=" + directory +
                 "\nstdin=" + stdin  +
+                "\nstdincmd=" + stdincmd +
                 "\npropertiesPath=" + propertiesPath ;
     }
 

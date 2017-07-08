@@ -8,7 +8,7 @@ class ReadLineGrabRelevant {
     /**
      * Given a String of a lastb output line, return the relevant data as a String[] with Strings valid for SQL
      * @param line String of the lastb line
-     * @return String[] containing all the relevant Strings for SQL insertion
+     * @return String[] containing all the relevant Strings for SQL insertionA
      *
      */
     String[] collectRelevant(String line) {

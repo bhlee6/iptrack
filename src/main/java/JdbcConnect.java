@@ -2,10 +2,8 @@ import com.maxmind.geoip2.exception.GeoIp2Exception;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Scanner;
 
 public class JdbcConnect {
 
@@ -17,7 +15,11 @@ public class JdbcConnect {
     private String password;
     private String host;
     private String port;
-    Path credentialsPath;
+    public Path credentialsPath;
+    public Path ipDb;
+    public String cmd;
+    private static boolean loading = true;
+    private String sslFalse = "?useSSL=false";
 
     //Files to be added to the database
     ArrayList<File> csvFiles = new ArrayList<>();
@@ -34,21 +36,42 @@ public class JdbcConnect {
      */
     void run(I methodInterface) {
         try {
-            Scanner s = new Scanner(System.in);
+
             System.out.println("Ensure MySQL has an active connection.");
             setMySQLCredentials(); //Retrieve MySQL credentials from properties file
 
             db = new AccessDatabase();
+            db.ipDbPath = ipDb;
 
             //Create the database name and table with the provided SQL credentials
             createDBandTable(db);
 
+            progressBar("Importing data...");
+
             //Import the given input to the database
             methodInterface.myMethod();
+
             //Close statement and connections
+            loading = false;
             db.close();
-            s.close();
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //////////////////////////////////////////////////////
+    //IMPORT METHODS
+    //////////////////////////////////////////////////////
+
+    /**
+     * Imports the lastb log information into the database when it is provided as stdin from given lastb command
+     */
+    public void importFromCmd() {
+        try {
+            Process p = Runtime.getRuntime().exec(new String[]{"bash","-c",cmd});
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            importFromReader(br); }
+        catch (Exception e){
             e.printStackTrace();
         }
     }
@@ -56,10 +79,11 @@ public class JdbcConnect {
     /**
      * Imports the lastb log information into the database when it is provided as stdin
      */
-    public void importFromStdin() throws IOException, GeoIp2Exception, ParseException {
+    public void importFromStdin() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         importFromReader(br);
     }
+
 
     public void importFromReader(BufferedReader br) {
         try {
@@ -135,7 +159,7 @@ public class JdbcConnect {
      * @return url to be used for mysql database connection
      */
     public String getURL(String host, String port) {
-        return "jdbc:mysql://" + host + ":" + port + "/";
+        return "jdbc:mysql://" + host + ":" + port;
     }
 
     /**
@@ -145,10 +169,39 @@ public class JdbcConnect {
      * @param db the given AccessDatabase object
      */
     public void createDBandTable(AccessDatabase db) {
-        db.url = getURL(host, port); //Set db url
+        db.url = getURL(host, port) + sslFalse; //Set db url
         db.getConnection(username, password); //Get DB Connection
         db.createDB(dbName); //Create DB with the provided name
+        db.url = getURL(host, port) +"/"+ dbName + sslFalse;
         db.getConnection(username, password); //Regrab connection to newly created DB
         db.createTable(); //Create the table
+    }
+
+
+    /**
+     * Bar to display while running inserts
+     * @param s String to be printed out
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private static synchronized void progressBar(String s) throws IOException, InterruptedException {
+        System.out.println(s);
+        Thread thread = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    while(loading) {
+                        System.out.write("-".getBytes());
+                        Thread.sleep(500);
+                    }
+                    System.out.write("Done Inserting \r\n".getBytes());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        thread.start();
     }
 }

@@ -1,4 +1,5 @@
 
+import java.nio.file.Path;
 import java.sql.*;
 import java.util.ArrayList;
 
@@ -18,6 +19,7 @@ public class AccessDatabase {
     public  String url = "";
     String tableName = "attempt";
     boolean dbIsCreated = false;
+    public Path ipDbPath;
 
 
     /**
@@ -63,7 +65,6 @@ public class AccessDatabase {
             }
             //DB is now created, set dbIsCreated to true, and add db to the URL
             dbIsCreated = true;
-            url = url + dbname;
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -120,7 +121,7 @@ public class AccessDatabase {
             String[] relevantTokens = rl.collectRelevant(line);
 
             if (relevantTokens[0] == null){
-                System.out.println("Line cannot be imported:" + line);
+                System.out.println("\nLine cannot be imported:" + line);
             }
 
             else {
@@ -211,6 +212,7 @@ public class AccessDatabase {
      */
     public String[] getLocationForSQL(String ipAddress) {
         LocationOfIP loc = new LocationOfIP();
+        loc.dbPath = ipDbPath;
         String[] locToModify = loc.findFullLocation(ipAddress);
         return locToModify;
     }

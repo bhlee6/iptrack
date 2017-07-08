@@ -7,10 +7,12 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="iptrack" />
+        <module name="trackip" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="iptrack" target="1.8" />
+      <module name="trackip" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

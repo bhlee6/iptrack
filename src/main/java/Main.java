@@ -37,6 +37,9 @@ public class Main {
         //The user given path to properties file is passed to the credentials path
         jc.credentialsPath = inputArgs.propertiesPath;
 
+        //The user given path to Geolite2 database is passed to the database path
+        jc.ipDb = inputArgs.ipDb;
+
         //When user invokes help command
         if (inputArgs.isHelp()) {
             showUsage(jCommander);
@@ -44,6 +47,12 @@ public class Main {
         //If the data is provided through stdin
         if (inputArgs.stdin) {
             runFromStdin();
+        }
+
+        //If the data is provided through stdin and a given lastb command
+        if (inputArgs.stdincmd != null) {
+            jc.cmd = inputArgs.stdincmd;
+            runFromCmd();
         }
         //If the data is provided through files and/or directories
         else {
@@ -85,6 +94,14 @@ public class Main {
      */
     private void runFromStdin() {
         jc.run(jc::importFromStdin);
+    }
+
+
+    /**
+     * Runs the run method in JdbcConnect when the command line input is from stdin
+     */
+    private void runFromCmd() {
+        jc.run(jc::importFromCmd);
     }
 
     /**

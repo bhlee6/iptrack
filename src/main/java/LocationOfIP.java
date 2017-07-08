@@ -1,9 +1,11 @@
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import com.maxmind.geoip2.DatabaseReader;
-import com.maxmind.geoip2.exception.GeoIp2Exception;
 import com.maxmind.geoip2.model.CityResponse;
+import com.maxmind.geoip2.record.City;
 
 
 /**
@@ -13,9 +15,25 @@ import com.maxmind.geoip2.model.CityResponse;
  */
 public class LocationOfIP {
 
-     private String dbName = "GeoLite2-City.mmdb";
-     private ClassLoader classLoader = LocationOfIP.class.getClassLoader();
-     private File db = new File(classLoader.getResource(dbName).getFile());
+
+
+    //private String dbName = "sample/GeoLite2-City.mmdb";
+    //This Iteration provided for complete single file jar implementation, but very slow due to stream build
+    // private InputStream stream = LocationOfIP.class.getClassLoader().getResourceAsStream(dbName);
+
+     /* When including the geolite db into a packaged jar, it became necessary to build it as a stream,
+     however, the performance is significantly diminished.   Consideration needed for best way to package.
+
+     NOTE: Including the db into the Packaged Jar and reading from inputStream results not advised. TOO SLOW.
+
+     */
+    // private ClassLoader classLoader = LocationOfIP.class.getClassLoader();
+    // private File db = new File(classLoader.getResource(dbName).getFile());
+
+    public Path dbPath = Paths.get("C:\\CSPersonal\\iptrack\\sample\\GeoLite2-City.mmdb");
+    private File db = new File(dbPath.toString());
+
+
 
     /**
      * Given a string Ip address, returns an array of the location of the IP address in the format City, State, Country
@@ -26,8 +44,11 @@ public class LocationOfIP {
     String[] findFullLocation(String ip) {
         String[] locArray = new String[3];
         try {
-            //Location of the geoIP2 city database
+            //PREVIOUS BUILD, MUCH FASTER IF DB IS ON LOCAL MACHINE RATHER THAN BUILDING FROM JAR
             DatabaseReader dbReader = new DatabaseReader.Builder(db).build();
+
+            //Location of the geoIP2 city database
+            //DatabaseReader dbReader = new DatabaseReader.Builder(stream).build();
 
             InetAddress ipAddress = InetAddress.getByName(ip);
             CityResponse response = dbReader.city(ipAddress);

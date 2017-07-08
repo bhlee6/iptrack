@@ -12,8 +12,8 @@ public class DirectoryParameterValidator implements IParameterValidator {
 
     /**
      * Checks to make sure the given path exists, and has read and write permissions.
-     * @param name
-     * @param value
+     * @param name name of parameter
+     * @param value given value
      * @throws ParameterException
      */
     @Override
