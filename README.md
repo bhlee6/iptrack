@@ -3,7 +3,7 @@
 ## *** Work in Progress *** ##
 
 ## Goals ##
-The goal of this project is to upload the output of the linux lastb command to a MySQL Database, find out the world location of the IP address, and to run various queries and analysis on the data to see if we can discover any interesting trends in the users or the way that users may maliciously attempt to login to your system (E.g. Which Cities or countries are attempting to log in to my system the most often? What time of the day has the most activity? Specific details regarding each IP Address etc.)
+The goal of this project is to upload the output of the linux lastb command (on linux servers) to a MySQL Database, find out the world location of the IP address, and to run various queries and analysis on the data to see if we can discover any interesting trends in the users or the way that users may maliciously attempt to login to your system (E.g. Which Cities or countries are attempting to log in to my system the most often? What time of the day has the most activity? Specific details regarding each IP Address etc.)
 
 The current iteration of the program is a two step process.
 1.  The user uploads the lastb data into the MySQL database.
@@ -28,7 +28,7 @@ In order to properly ensure that the program runs correctly, the following is ne
 
 ## Running the Program ##
 ### Uploading the data ###
-Run the java program supplying the appropriate files. The program requires several arguments:
+Run the java program supplying the appropriate files.  (an example executable Jar can be found in the artifacts folder) The program requires several arguments:
 
 1.  The path to the GeoLite2 City database (REQUIRED)
 
@@ -61,7 +61,7 @@ Example this will run the jar on the file 'lastlogins' using the given Database 
 
 Run the login.php file through your preferred method of running php.  Enter the same login credentials to access your MySQL database, the Database name should be the same database you chose in your properties file previously.  Once properly logged in, you can search for details regarding a specific IP Address, or expand the number of results returned from each Query.
 
-(Note: You must have a running server/web server that can process php files)
+(Note: You must have a running server/web server that can process php files in order to properly view php)
 
 ### Comments/TODO/FUTURE Directions ###
 Tried including the database file directly in jars to minimize files required, but resulted in massively slow data imports, which possibly can be optimized with the csv version of the database, but this could just be the slow processing of InputStream.  Further testing will be required to optimize speed and user friendliness.
