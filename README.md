@@ -49,8 +49,7 @@ Run the Main.java class or jar with -h or --help to see options.
 
 Each lastb output line fed into the program must strictly adhere to the following format otherwise the program cannot parse the input correctly:
         
-        user    protocol        ipaddress       date                    eventlength
-        
+        user    protocol        ipaddress       date            time     eventlength
         admin    ssh:notty    71.227.146.158   Wed Jun 28 17:51 - 17:51  (00:00)
 
 Example this will run the jar on the file 'lastlogins' using the given Database path, and Properties path:
