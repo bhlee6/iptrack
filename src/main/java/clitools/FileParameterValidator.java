@@ -14,7 +14,6 @@ public class FileParameterValidator implements IParameterValidator {
      * Checks to make sure the given path exists and is a regular file
      * @param name name of parameter
      * @param value given value
-     * @throws ParameterException
      */
     @Override
     public void validate(String name, String value) throws ParameterException {

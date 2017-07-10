@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.ArrayList;
 
-public class JdbcConnect {
+class JdbcConnect {
 
     private AccessDatabase db;
     private String dbName;
@@ -15,14 +15,13 @@ public class JdbcConnect {
     private String password;
     private String host;
     private String port;
-    public Path credentialsPath;
-    public Path ipDb;
-    public String cmd;
+    private Path credentialsPath;
+    private Path ipDbPath;
+    private String linuxCommand;
     private static boolean loading = true;
-    private String sslFalse = "?useSSL=false";
 
     //Files to be added to the database
-    ArrayList<File> csvFiles = new ArrayList<>();
+    private ArrayList<File> filesToUpload = new ArrayList<>();
 
     //Interface Used to help pass which method for generating input into database
     interface I {
@@ -40,20 +39,26 @@ public class JdbcConnect {
             System.out.println("Ensure MySQL has an active connection.");
             setMySQLCredentials(); //Retrieve MySQL credentials from properties file
 
+            //Set up Access Database
             db = new AccessDatabase();
-            db.ipDbPath = ipDb;
+            db.setIpDbPath(ipDbPath);
+            db.setupLocationDbReader();
 
             //Create the database name and table with the provided SQL credentials
             createDBandTable(db);
 
-            progressBar("Importing data...");
+            progressBar();
 
             //Import the given input to the database
             methodInterface.myMethod();
 
-            //Close statement and connections
+
+            //Finished importing data, loading is now false
             loading = false;
+
+            //Close DB connections
             db.close();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,9 +71,9 @@ public class JdbcConnect {
     /**
      * Imports the lastb log information into the database when it is provided as stdin from given lastb command
      */
-    public void importFromCmd() {
+    void importFromCmd() {
         try {
-            Process p = Runtime.getRuntime().exec(new String[]{"bash","-c",cmd});
+            Process p = Runtime.getRuntime().exec(new String[]{"bash","-c",linuxCommand});
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             importFromReader(br); }
         catch (Exception e){
@@ -79,13 +84,13 @@ public class JdbcConnect {
     /**
      * Imports the lastb log information into the database when it is provided as stdin
      */
-    public void importFromStdin() {
+    void importFromStdin() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         importFromReader(br);
     }
 
 
-    public void importFromReader(BufferedReader br) {
+    private void importFromReader(BufferedReader br) {
         try {
             String line;
             br.readLine();
@@ -104,13 +109,13 @@ public class JdbcConnect {
      * @param fileToUpload given log file
      * @param db           the given AccessDatabase
      */
-    public void importSingleFileToSQL(File fileToUpload, AccessDatabase db) {
+    private void importSingleFileToSQL(File fileToUpload, AccessDatabase db) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(fileToUpload));
             String line;
             //db.conn.setAutoCommit(false);
             String insertStmt = db.createInsertStatement();
-            db.pstmt = db.conn.prepareStatement(insertStmt);
+            db.setPstmt(db.conn.prepareStatement(insertStmt));
             System.out.println("Inserting each log in attempt into the database...");
             while ((line = br.readLine()) != null) {
                 //Insert each line into the database
@@ -127,8 +132,8 @@ public class JdbcConnect {
     /**
      * Imports all the information in all log files in csvFiles to the database
      */
-    public void importAllFilesToSQL() {
-        for (File f : csvFiles) {
+    void importAllFilesToSQL() {
+        for (File f : filesToUpload) {
             importSingleFileToSQL(f, db);
         }
     }
@@ -158,7 +163,7 @@ public class JdbcConnect {
      * @param port port to be used in the url to connect to the db
      * @return url to be used for mysql database connection
      */
-    public String getURL(String host, String port) {
+    private String getURL(String host, String port) {
         return "jdbc:mysql://" + host + ":" + port;
     }
 
@@ -168,11 +173,12 @@ public class JdbcConnect {
      *
      * @param db the given AccessDatabase object
      */
-    public void createDBandTable(AccessDatabase db) {
-        db.url = getURL(host, port) + sslFalse; //Set db url
+    private void createDBandTable(AccessDatabase db) {
+        String sslFalse = "?useSSL=false";
+        db.setUrl(getURL(host, port) + sslFalse); //Set db url
         db.getConnection(username, password); //Get DB Connection
         db.createDB(dbName); //Create DB with the provided name
-        db.url = getURL(host, port) +"/"+ dbName + sslFalse;
+        db.setUrl(getURL(host, port) +"/"+ dbName + sslFalse); //Reset db url
         db.getConnection(username, password); //Regrab connection to newly created DB
         db.createTable(); //Create the table
     }
@@ -180,28 +186,33 @@ public class JdbcConnect {
 
     /**
      * Bar to display while running inserts
-     * @param s String to be printed out
-     * @throws IOException
-     * @throws InterruptedException
      */
-    private static synchronized void progressBar(String s) throws IOException, InterruptedException {
-        System.out.println(s);
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                try {
-                    while(loading) {
-                        System.out.write("-".getBytes());
-                        Thread.sleep(500);
-                    }
-                    System.out.write("Done Inserting \r\n".getBytes());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+    private static synchronized void progressBar() throws IOException, InterruptedException {
+        System.out.println("Importing data...");
+        Thread thread = new Thread(() -> {
+            try {
+                while(loading) {
+                    System.out.write("-".getBytes());
+                    Thread.sleep(500);
                 }
+                System.out.write("Done Inserting \r\n".getBytes());
+            } catch (IOException | InterruptedException e) {
+                e.printStackTrace();
             }
-        };
+        });
         thread.start();
+    }
+
+    void setCredentialsPath(Path p) {
+        this.credentialsPath = p;
+    }
+    void setIpDbPath(Path p) {
+        this.ipDbPath = p;
+    }
+    void setLinuxCommand(String cmd) {
+        this.linuxCommand = cmd;
+    }
+    void addFileToUpload(File f) {
+        filesToUpload.add(f);
     }
 }

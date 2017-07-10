@@ -11,7 +11,7 @@ public class CommandValidator implements IParameterValidator {
     @Override
     public void validate(String name, String value) throws ParameterException {
         if (value == null || value.length() == 0) {
-            String msg = String.format("The command must not be null or empty");
+            String msg = "The command must not be null or empty";
             throw new ParameterException(msg);
         } else {
             String[] tokens = value.split(" ");

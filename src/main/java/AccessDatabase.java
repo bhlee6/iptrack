@@ -10,6 +10,7 @@ import java.util.ArrayList;
 @SuppressWarnings("ALL")
 public class AccessDatabase {
 
+
     String driver = "com.mysql.jdbc.Driver";
     Connection conn = null;
     Statement stmt = null;
@@ -20,6 +21,7 @@ public class AccessDatabase {
     String tableName = "attempt";
     boolean dbIsCreated = false;
     public Path ipDbPath;
+    public LocationOfIP loc;
 
 
     /**
@@ -190,20 +192,30 @@ public class AccessDatabase {
             if (resultSet != null) {
                 resultSet.close();
             }
-
             if (stmt != null) {
                 stmt.close();
             }
-
             if (conn != null) {
                 conn.close();
             }
+            //Close the Maxmind database reader
+            loc.closeDbReader();
+
+            System.out.println("Closing MySQL and Maxmind database connections.");
         } catch (Exception e) {
             System.out.println(e.getMessage());
 
         }
     }
 
+    /**
+     * Sets up the Maxmind DB reader
+     */
+    public void setupLocationDbReader() {
+        loc = new LocationOfIP();
+        loc.setDbPath(ipDbPath);
+        loc.buildDbReader();
+    }
 
     /**
      * Gets the location of an ip address
@@ -211,8 +223,6 @@ public class AccessDatabase {
      * @return String[] containing the location of the ip address
      */
     public String[] getLocationForSQL(String ipAddress) {
-        LocationOfIP loc = new LocationOfIP();
-        loc.dbPath = ipDbPath;
         String[] locToModify = loc.findFullLocation(ipAddress);
         return locToModify;
     }
@@ -228,6 +238,16 @@ public class AccessDatabase {
         String curr;
         curr = s.replaceAll("'", "''");
         return curr;
+    }
+
+    public void setIpDbPath(Path path) {
+        this.ipDbPath = path;
+    }
+    public void setUrl(String url) {
+        this.url = url;
+    }
+    public void setPstmt(PreparedStatement pstmt) {
+        this.pstmt = pstmt;
     }
 }
 

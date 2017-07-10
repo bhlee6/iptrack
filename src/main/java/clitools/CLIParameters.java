@@ -1,7 +1,5 @@
 package clitools;
 import com.beust.jcommander.Parameter;
-import com.maxmind.geoip2.record.City;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,8 +52,8 @@ public class CLIParameters {
             required = true,
             validateWith = FileParameterValidator.class,
             converter = PathConverter.class,
-            description = "Absolute path to the 'GeoLite2-City.mmdb' file.")
-    public Path ipDb;
+            description = "Absolute path to the GeoLite2-City.mmdb file.")
+    public Path ipDbPath;
 
     public boolean isHelp() {
         return help;
