@@ -69,6 +69,8 @@ Graphs to depict certain trends, transition results from pure php to HTML/Javasc
 
 Further testing on linux commands
 
+Generate a list of the top offending IPs to block their future login attempts: Questions: automated? How many? How often? etc.
+
 ### References: ###
 -  https://github.com/mvpjava/jcommander-tutorial
 -  https://www.binpress.com/tutorial/using-php-with-mysql-the-right-way/17
