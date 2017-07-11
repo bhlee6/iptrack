@@ -61,7 +61,7 @@ public class AccessDatabase {
             try {
                 stmt = conn.createStatement();
                 stmt.execute(dbCreate);
-                System.out.println("DB " + dbname + " is created!");
+                System.out.println("Database " + dbname + " has been created!");
             } catch (SQLException e) {
                 System.out.println(e.getMessage());
             }
@@ -102,7 +102,7 @@ public class AccessDatabase {
         try {
             stmt = conn.createStatement();
             stmt.execute(sqlCreate);
-            System.out.println("Table attempt is created!");
+            System.out.println("Table attempt has been created!");
         } catch (SQLException e) {
             e.printStackTrace();
         }

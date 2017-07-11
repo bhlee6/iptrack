@@ -62,7 +62,7 @@ public class Main {
         else {
             //Single File
             if (inputArgs.file != null) {
-                System.out.println("Uploading Given File:" + inputArgs.file.getFileName());
+                System.out.println("Uploading File: " + inputArgs.file.getFileName());
                 jc.addFileToUpload(inputArgs.file.toFile());
             }
             //Multiple Files
@@ -73,11 +73,11 @@ public class Main {
                     jc.addFileToUpload(f);
                     sb = sb.append(f.getName()).append(" ");
                 }
-                System.out.println("Uploading Given Files:" + sb.toString());
+                System.out.println("Uploading Files:" + sb.toString());
             }
             //Directory provided
             if (inputArgs.directory != null) {
-                System.out.println("Uploading Given Files in directory...");
+                System.out.println("Uploading Files in directory...");
                 for (File f: inputArgs.directory.toFile().listFiles()) {
                     System.out.println("Found file:" + f.getName());
                     jc.addFileToUpload(f);

@@ -75,7 +75,7 @@ class JdbcConnect {
         try {
             Process p = Runtime.getRuntime().exec(new String[]{"bash","-c",linuxCommand});
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            importFromReader(br); }
+            createPstmtAndInsert(br); }
         catch (Exception e){
             e.printStackTrace();
         }
@@ -86,21 +86,7 @@ class JdbcConnect {
      */
     void importFromStdin() {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        importFromReader(br);
-    }
-
-
-    private void importFromReader(BufferedReader br) {
-        try {
-            String line;
-            br.readLine();
-            while ((line = br.readLine()) != null && line.length() != 0) {
-                if (line.trim().length() > 0)
-                    db.insertLineIntoTable(line);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        createPstmtAndInsert(br);
     }
 
     /**
@@ -112,21 +98,33 @@ class JdbcConnect {
     private void importSingleFileToSQL(File fileToUpload, AccessDatabase db) {
         try {
             BufferedReader br = new BufferedReader(new FileReader(fileToUpload));
-            String line;
+            createPstmtAndInsert(br);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * Create the Prepared Statement template and insert the line into the db table
+     * @param br Buffered Reader of the user given input
+     */
+    private void createPstmtAndInsert(BufferedReader br) {
+        try {
             //db.conn.setAutoCommit(false);
+            String line;
             String insertStmt = db.createInsertStatement();
             db.setPstmt(db.conn.prepareStatement(insertStmt));
             System.out.println("Inserting each log in attempt into the database...");
             while ((line = br.readLine()) != null) {
-                //Insert each line into the database
-                if (line.trim().length() > 0) {
+                if (line.trim().length() > 0)
                     db.insertLineIntoTable(line);
-                }
             }
             //  db.conn.commit();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
     }
 
     /**
