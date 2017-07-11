@@ -52,7 +52,7 @@ Each lastb output line fed into the program must strictly adhere to the followin
         user    protocol        ipaddress       date            time     eventlength
         admin    ssh:notty    71.227.146.158   Wed Jun 28 17:51 - 17:51  (00:00)
 
-Example this will run the jar on the file 'lastlogins' using the given Database path, and Properties path:
+Example: This will run the jar on the file 'lastlogins' using the given Database path, and Properties path:
         
         java -jar -iptrack.jar -db iptrack\sample\GeoLite2-City.mmdb -p iptrack\sample\config.properties -f iptrack\sample\lastlogins
 
@@ -67,8 +67,11 @@ Tried including the database file directly in jars to minimize files required, b
 
 Graphs to depict certain trends, transition results from pure php to HTML/Javascript to deploy to the web, additional interesting queries as data is being analyzed
 
+Further testing on linux commands
 
-References:
+Generate a list of the top offending IPs to block their future login attempts: Questions: automated? How many? How often? etc.
+
+### References: ###
 -  https://github.com/mvpjava/jcommander-tutorial
 -  https://www.binpress.com/tutorial/using-php-with-mysql-the-right-way/17
 -  https://www.maxmind.com/en/home (for GeoIp2 database)
